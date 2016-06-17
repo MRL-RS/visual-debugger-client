@@ -7,27 +7,36 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created on 6/4/2016.
  *
  * @author Pooya Deldar Gohardani
  */
-public class VDClient {
+public final class VDClient {
+    private static final String DEFAULT_HOST_ADDRESS = "127.0.0.1";
+    private static final int DEFAULT_PORT_NUMBER = 1099;
 
-    private static ViewerGateway viewerGateway;
-    private static String host = "127.0.0.1";
-    private static int port = 1099;
-    private static ExecutorService executorService = Executors.newCachedThreadPool();
-    private static boolean enabled = false;
+    private ViewerGateway viewerGateway;
+    private ExecutorService executorService;
+    private boolean enabled = true;
+    private static VDClient instance;
+
+    private VDClient() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    public synchronized static VDClient getInstance() {
+        if (instance == null) {
+            instance = new VDClient();
+        }
+        return instance;
+    }
 
 
-    public static synchronized void init(String host, int port) {
+    public synchronized void init(String host, int port) {
         if (viewerGateway == null) {
             try {
-                VDClient.host = host;
-                VDClient.port = port;
                 Registry registry = LocateRegistry.getRegistry(host, port);
                 viewerGateway = (ViewerGateway) registry.lookup("com.mrl.debugger.remote.ViewerGateway");
             } catch (RemoteException | NotBoundException e) {
@@ -36,19 +45,19 @@ public class VDClient {
         }
     }
 
-    public static boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public static void setEnabled(boolean enabled) {
-        VDClient.enabled = enabled;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public static void init() {
-        init(host, port);
+    public void init() {
+        init(DEFAULT_HOST_ADDRESS, DEFAULT_PORT_NUMBER);
     }
 
-    public static void draw(int agentId, String layerTag, Serializable data) {
+    public void draw(int agentId, String layerTag, Serializable data) {
         if (!enabled) {
             return;
         }
@@ -63,16 +72,14 @@ public class VDClient {
         }
     }
 
-    public static void drawAsync(int agentId, String layerTag, Serializable data) {
+    public void drawAsync(int agentId, String layerTag, Serializable data) {
         if (!enabled) {
             return;
         }
         executorService.execute(() -> draw(agentId, layerTag, data));
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) VDClient.executorService;
-        System.out.println(threadPoolExecutor.getLargestPoolSize() + " : " + threadPoolExecutor.getPoolSize());
     }
 
-    public static void shutdown() {
+    public void shutdown() {
         executorService.shutdown();
     }
 }
