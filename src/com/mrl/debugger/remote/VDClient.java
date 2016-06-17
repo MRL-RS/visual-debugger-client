@@ -14,8 +14,8 @@ import java.util.concurrent.Executors;
  * @author Pooya Deldar Gohardani
  */
 public final class VDClient {
-    private static final String DEFAULT_HOST_ADDRESS = "127.0.0.1";
-    private static final int DEFAULT_PORT_NUMBER = 1099;
+    public static final String DEFAULT_HOST_ADDRESS = "127.0.0.1";
+    public static final int DEFAULT_PORT_NUMBER = 1099;
 
     private ViewerGateway viewerGateway;
     private ExecutorService executorService;
